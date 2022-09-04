@@ -7,7 +7,7 @@ from .mixins import UUIDMixin, TimeStampedMixin
 
 class Genre(UUIDMixin, TimeStampedMixin):
     name = models.CharField(_('name'), max_length=255)
-    description = models.TextField(_('description'), blank=True)
+    description = models.TextField(_('description'), null=True, blank=False)
 
     class Meta:
         db_table = "content\".\"genre"
@@ -20,9 +20,9 @@ class Genre(UUIDMixin, TimeStampedMixin):
 
 class Filmwork(UUIDMixin, TimeStampedMixin):
     title = models.CharField(_('title'), max_length=255)
-    description = models.TextField(_('description'), blank=True)
-    creation_date = models.DateField(_('creation_date'))
-    rating = models.FloatField(_('rating'), blank=True,
+    description = models.TextField(_('description'), blank=False, null=True)
+    creation_date = models.DateField(_('creation_date'), db_index=True, null=True)
+    rating = models.FloatField(_('rating'), blank=False, null=False,
                                validators=[MinValueValidator(0),
                                            MaxValueValidator(100)])
 
@@ -96,7 +96,7 @@ class PersonFilmwork(UUIDMixin):
         db_table = "content\".\"person_film_work"
 
         constraints = [
-            models.UniqueConstraint(fields=['film_work', 'person'], name='unique_film_work_person_idx')
+            models.UniqueConstraint(fields=['film_work', 'person', 'role'], name='unique_role_film_work_person_idx')
         ]
 
     def __str__(self):

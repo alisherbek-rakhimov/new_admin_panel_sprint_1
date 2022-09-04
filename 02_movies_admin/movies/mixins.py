@@ -1,7 +1,6 @@
 import uuid
 from django.db import models
 
-
 class TimeStampedMixin(models.Model):
     # auto_now_add автоматически выставит дату создания записи
     created = models.DateTimeField(auto_now_add=True)
