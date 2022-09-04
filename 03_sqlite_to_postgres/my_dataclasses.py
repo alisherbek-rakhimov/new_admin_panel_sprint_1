@@ -1,165 +1,103 @@
 from dataclasses import dataclass, fields
 from dataclasses import field
-from abc import ABC
+from abc import ABC, abstractmethod
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timezone
+
+from enum import Enum
+from typing import Type, Iterable
 
 
-# from enum import Enum
+class TheBaseDataclass(ABC):
+    @staticmethod
+    @abstractmethod
+    def table_name():
+        pass
 
 
-# @dataclass
-# class AbstractDataclass(ABC):
-#     def __new__(cls, *args, **kwargs):
-#         if cls == AbstractDataclass or cls.__bases__[0] == AbstractDataclass:
-#             raise TypeError("Cannot instantiate abstract class.")
-#         return super().__new__(cls)
+class AttrsMixin:
+    @classmethod
+    def pg_attrs(cls: Type[dataclass]):
+        attrs_ = []
+        for field_ in fields(cls):
+            if field_.name == 'created_at':
+                attrs_.append('created')
+            elif field_.name == 'updated_at':
+                attrs_.append('modified')
+            else:
+                attrs_.append(field_.name)
+        return attrs_
+
+    @classmethod
+    def sqlite_attrs(cls: Type[dataclass]) -> Iterable:
+        return ', '.join([field_.name for field_ in fields(cls)])
 
 
-# class TimeStampedMixin(AbstractDataclass):
 
-
-# class UUIDMixin(AbstractDataclass):
-
-
-# class PostInitMixin(AbstractDataclass):
-
-
-@dataclass(slots=True)
-class Person:
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    full_name: str = field(default='')
-    created_at: datetime = field(default=datetime.now())
-    updated_at: datetime = field(default=datetime.now())
+@dataclass(slots=True, frozen=True, kw_only=True)
+class Genre(TheBaseDataclass, AttrsMixin):
+    id: uuid.UUID
+    name: str
+    description: str
+    created_at: datetime
+    updated_at: datetime
 
     @staticmethod
-    def attrs() -> str:
-        return 'id, full_name, created, modified'
-
-    @staticmethod
-    def table():
-        return 'person'
-
-    @staticmethod
-    def attr_placeholders():
-        return ', '.join(['%s'] * 4)
-
-    def __post_init__(self):
-        for field in fields(self):
-            if getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
-
-
-@dataclass(slots=True)
-class Filmwork:
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    title: str = field(default='')
-    description: str = field(default='')
-    creation_date: datetime = field(default=date.today())
-    rating: float = field(default=0.0)
-    type: str = field(default='')
-    created_at: datetime = field(default=datetime.now())
-    updated_at: datetime = field(default=datetime.now())
-
-    @staticmethod
-    def attrs() -> str:
-        return 'id, title, description, creation_date, rating, type, created, modified'
-
-    @staticmethod
-    def table():
-        return 'film_work'
-
-    @staticmethod
-    def attr_placeholders():
-        return ', '.join(['%s'] * 8)
-
-    def __post_init__(self):
-        for field in fields(self):
-            if getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
-
-
-@dataclass(slots=True)
-class Genre:
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    name: str = field(default='')
-    description: str = field(default='')
-    created_at: datetime = field(default=datetime.now())
-    updated_at: datetime = field(default=datetime.now())
-
-    @staticmethod
-    def attrs() -> str:
-        return 'id, name, description, created, modified'
-
-    @staticmethod
-    def table():
+    def table_name():
         return 'genre'
 
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class Filmwork(TheBaseDataclass, AttrsMixin):
+    id: uuid.UUID
+    title: str
+    description: str
+    creation_date: datetime
+    rating: float
+    type: str
+    created_at: datetime
+    updated_at: datetime
+
     @staticmethod
-    def attr_placeholders():
-        return ', '.join(['%s'] * 5)
-
-    def __post_init__(self):
-        for field in fields(self):
-            if getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
+    def table_name():
+        return 'film_work'
 
 
-# class Role(Enum):
-#     actor = 'actor'
-#     producer = 'producer'
-#     director = 'director'
+@dataclass(slots=True, kw_only=True, frozen=True)
+class Person(TheBaseDataclass, AttrsMixin):
+    id: uuid.UUID
+    full_name: str
+    created_at: datetime
+    updated_at: datetime
+
+    @staticmethod
+    def table_name():
+        return 'person'
 
 
-@dataclass(slots=True)
-class PersonFilmwork:
+@dataclass(slots=True, kw_only=True, frozen=True)
+class PersonFilmwork(TheBaseDataclass, AttrsMixin):
     film_work_id: uuid.uuid4
     person_id: uuid.uuid4
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    role: str = field(default='')
-    created_at: datetime = field(default=datetime.now())
+    id: uuid.UUID
+    role: str
+    created_at: datetime
 
     @staticmethod
-    def attrs() -> str:
-        return 'film_work_id, person_id, id, role, created'
-
-    @staticmethod
-    def table():
+    def table_name():
         return 'person_film_work'
 
-    @staticmethod
-    def attr_placeholders():
-        return ', '.join(['%s'] * 5)
 
-    def __post_init__(self):
-        for field in fields(self):
-            if getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
-
-
-@dataclass(slots=True)
-class GenreFilmwork:
+@dataclass(slots=True, kw_only=True, frozen=True)
+class GenreFilmwork(TheBaseDataclass, AttrsMixin):
     film_work_id: uuid.uuid4
     genre_id: uuid.uuid4
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    created_at: datetime = field(default=datetime.now())
+    id: uuid.UUID
+    created_at: datetime
 
     @staticmethod
-    def attrs() -> str:
-        return 'film_work_id, genre_id, id, created'
-
-    @staticmethod
-    def table():
+    def table_name():
         return 'genre_film_work'
-
-    @staticmethod
-    def attr_placeholders():
-        return ', '.join(['%s'] * 4)
-
-    def __post_init__(self):
-        for field in fields(self):
-            if getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
 
 
 def dataclass_factory(cls):
@@ -170,37 +108,3 @@ def dataclass_factory(cls):
         return cls(**d)
 
     return factory
-
-# def filmwork_factory(cursor, row):
-#     d = {}
-#     for idx, col in enumerate(cursor.description):
-#         d[col[0]] = row[idx]
-#     return Filmwork(**d)
-#
-#
-# def person_factory(cursor, row):
-#     d = {}
-#     for idx, col in enumerate(cursor.description):
-#         d[col[0]] = row[idx]
-#     return Person(**d)
-#
-#
-# def genre_factory(cursor, row):
-#     d = {}
-#     for idx, col in enumerate(cursor.description):
-#         d[col[0]] = row[idx]
-#     return Genre(**d)
-#
-#
-# def person_filmwork_factory(cursor, row):
-#     d = {}
-#     for idx, col in enumerate(cursor.description):
-#         d[col[0]] = row[idx]
-#     return PersonFilmwork(**d)
-#
-#
-# def genre_filmwork_factory(cursor, row):
-#     d = {}
-#     for idx, col in enumerate(cursor.description):
-#         d[col[0]] = row[idx]
-#     return GenreFilmwork(**d)

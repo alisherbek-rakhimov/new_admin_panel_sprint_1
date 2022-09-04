@@ -14,8 +14,12 @@
 Оказывается дата выхода был пустым в `db.sqlite` так что
 пришлось заполнить таблицу, так как `file_path`
 нет в загружаемой таблице его решил убрать.
+И еще нужно присвоить значение к rating в file_work, так как у нас стоит 0 < rating < 100
 
 ```sqlite
 alter table film_work
     drop column file_path;
+update film_work
+set rating = 0
+where rating is null;
 ```
