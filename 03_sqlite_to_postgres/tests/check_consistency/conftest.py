@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from sqlite3 import DatabaseError
-
+import logging
 import psycopg2
 import pytest
 from dotenv import load_dotenv
@@ -24,6 +24,6 @@ def loaders():
         return sqlite_loader, postgres_loader
 
     except DatabaseError as e:
-        print(e)
+        logging.error(e)
     except psycopg2.OperationalError as e:
-        print(e)
+        logging.error(e)

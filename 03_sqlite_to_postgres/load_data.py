@@ -1,9 +1,12 @@
 import contextlib
 import os
 import sqlite3
+import sys
 from dataclasses import astuple
 from sqlite3 import DatabaseError
 from typing import Any, Dict, Iterable, List, Tuple, Type, Generator
+from loguru import logger
+import logging
 
 import psycopg2
 from dateutil.parser import parse
@@ -97,12 +100,12 @@ class PostgresSaver:
             columns = sql.SQL(', ').join(map(sql.Identifier, d_class.pg_attrs()))
 
             tupled_generator: Generator[Tuple[Any]] = (astuple(row) for row in next(data_generator))
+
             insert_sql = sql.SQL(
                 "INSERT INTO {table_name} ({columns}) VALUES %s ON CONFLICT (id) DO NOTHING;"
             ).format(columns=columns, table_name=sql.Identifier(d_class.table_name()))
 
             execute_values(curs, insert_sql, tupled_generator)
-            # execute_batch(curs, insert_sql, iter(tupled_generator), page_size=100)
             pg_conn.commit()
 
     def truncate_tables(self, d_classes: Iterable[Type[TheBaseDataclass]]):
@@ -126,11 +129,11 @@ def load_from_sqlite(sqlite_conn: sqlite3.Connection, pg_conn: _connection):
 
     data_generator = sqlite_loader.load_movies(d_classes)
 
-    # for d_class, rows in data.items():
     postgres_saver.save_all_data(d_classes, data_generator)
 
 
 if __name__ == '__main__':
+    # logger.add(sys.stderr, format="{time} {level} {message}", level="ERROR")
 
     try:
         with contextlib.closing(
@@ -138,6 +141,6 @@ if __name__ == '__main__':
         ) as sqlite_conn, contextlib.closing(psycopg2.connect(**dsn, cursor_factory=DictCursor)) as pg_conn:
             load_from_sqlite(sqlite_conn, pg_conn)
     except DatabaseError as e:
-        print(e)
+        logger.error(e)
     except psycopg2.OperationalError as e:
-        print(e)
+        logging.error(e)
