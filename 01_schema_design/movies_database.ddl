@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS content.genre_film_work
 );
 
 DROP INDEX content.film_work_genre_idx;
-CREATE UNIQUE INDEX film_work_genre_idx ON content.genre_film_work (film_work_id, genre_id);
+CREATE UNIQUE INDEX film_work_genre_idx ON content.genre_film_work (film_work_id, genre_id, role);
 
 
 
